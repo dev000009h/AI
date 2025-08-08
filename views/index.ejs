@@ -1219,9 +1219,6 @@ class VMSSystem {
                 // Reset registration UI but keep modal open
                 document.getElementById('startRegistration').style.display = 'inline-block';
                 document.getElementById('cancelRegistration').textContent = 'Cancel';
-            } else {
-                alert(result.error || 'Registration failed');
-                this.closeRegistrationModal();
             }
             
         } catch (error) {
