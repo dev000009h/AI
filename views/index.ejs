@@ -996,6 +996,14 @@ class VMSSystem {
             regVideo.srcObject.getTracks().forEach(track => track.stop());
             regVideo.srcObject = null;
         }
+        
+        // Clear registration canvas
+        const regCanvas = document.getElementById('registrationOverlay');
+        const regCtx = regCanvas.getContext('2d');
+        regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
+        
+        // Reset form
+        document.getElementById('newUserName').value = '';
     }
     
     async setupRegistrationCamera() {
@@ -1008,8 +1016,8 @@ class VMSSystem {
             const constraints = {
                 video: {
                     deviceId: this.cameras[this.currentCameraIndex]?.deviceId,
-                    width: { ideal: 640, min: 300 },
-                    height: { ideal: 480, min: 225 },
+                    width: { ideal: 300 },
+                    height: { ideal: 225 },
                     frameRate: { ideal: 15, max: 30 }
                 }
             };
@@ -1021,14 +1029,16 @@ class VMSSystem {
             // Wait for video to be ready
             await new Promise(resolve => {
                 regVideo.onloadedmetadata = () => {
-                    regCanvas.width = regVideo.videoWidth;
-                    regCanvas.height = regVideo.videoHeight;
+                    // Set canvas to match video display size
+                    regCanvas.width = 300;
+                    regCanvas.height = 225;
                     console.log(`Registration video dimensions: ${regVideo.videoWidth}x${regVideo.videoHeight}`);
+                    console.log(`Registration canvas dimensions: ${regCanvas.width}x${regCanvas.height}`);
                     resolve();
                 };
             });
             
-            // Start face detection for registration preview with better error handling
+            // Start face detection for registration preview
             this.registrationDetectionLoop = async () => {
                 try {
                     if (document.getElementById('registrationModal').style.display !== 'block' || 
@@ -1038,61 +1048,79 @@ class VMSSystem {
                     
                     const detections = await faceapi
                         .detectAllFaces(regVideo, new faceapi.SsdMobilenetv1Options({ 
-                            minConfidence: 0.3,
+                            minConfidence: 0.4,
                             maxResults: 1
                         }))
                         .withFaceLandmarks()
                         .withFaceDescriptors();
                     
+                    // Clear canvas
                     regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
                     
                     if (detections.length > 0) {
+                        console.log(`Registration: Detected ${detections.length} faces`);
+                        
+                        // Calculate scale factors for canvas overlay
+                        const scaleX = regCanvas.width / regVideo.videoWidth;
+                        const scaleY = regCanvas.height / regVideo.videoHeight;
+                        
                         const resized = faceapi.resizeResults(detections, {
-                            width: regVideo.videoWidth,
-                            height: regVideo.videoHeight
+                            width: regCanvas.width,
+                            height: regCanvas.height
                         });
                         
-                        // Draw detection boxes
+                        // Draw detection boxes and labels
                         resized.forEach(detection => {
                             const box = detection.detection.box;
+                            console.log(`Registration face box:`, box);
+                            
+                            // Draw green detection box
                             regCtx.strokeStyle = '#00ff88';
-                            regCtx.lineWidth = 2;
+                            regCtx.lineWidth = 3;
                             regCtx.strokeRect(box.x, box.y, box.width, box.height);
                             
-                            // Add face quality indicator
-                            const landmarks = detection.landmarks;
-                            if (landmarks) {
-                                regCtx.fillStyle = '#00ff88';
-                                regCtx.font = 'bold 12px Arial';
-                                regCtx.fillText('Face Detected ✓', box.x, box.y - 5);
-                            }
+                            // Draw background for text
+                            regCtx.fillStyle = '#00ff88';
+                            regCtx.fillRect(box.x, box.y - 25, Math.max(box.width, 120), 25);
+                            
+                            // Draw text
+                            regCtx.fillStyle = '#000';
+                            regCtx.font = 'bold 12px Arial';
+                            regCtx.fillText('Face Detected ✓', box.x + 5, box.y - 8);
                         });
                         
                         // Store descriptors during registration
-                        if (this.registrationData.startTime) {
+                        if (this.registrationMode && this.registrationData.startTime) {
                             detections.forEach(detection => {
                                 if (detection.descriptor) {
                                     this.registrationData.descriptors.push(Array.from(detection.descriptor));
-                                    console.log(`Captured descriptor ${this.registrationData.descriptors.length}`);
+                                    console.log(`Captured descriptor ${this.registrationData.descriptors.length}, quality: ${detection.detection.score.toFixed(3)}`);
                                 }
                             });
                         }
                     } else {
-                        // Show "No face detected" message
+                        console.log('Registration: No faces detected');
+                        
+                        // Show "No face detected" message in center
                         regCtx.fillStyle = '#ff4444';
-                        regCtx.font = 'bold 14px Arial';
-                        regCtx.fillText('Position your face in the frame', 10, 30);
+                        regCtx.font = 'bold 16px Arial';
+                        regCtx.textAlign = 'center';
+                        regCtx.fillText('Position your face in the frame', regCanvas.width / 2, regCanvas.height / 2);
+                        regCtx.textAlign = 'left'; // Reset alignment
                     }
                     
                 } catch (error) {
                     console.error('Registration detection error:', error);
                 }
                 
-                setTimeout(this.registrationDetectionLoop, 150);
+                // Continue detection loop
+                if (this.registrationDetectionLoop) {
+                    setTimeout(this.registrationDetectionLoop, 100);
+                }
             };
             
-            // Start detection loop after a short delay
-            setTimeout(this.registrationDetectionLoop, 500);
+            // Start detection loop immediately
+            this.registrationDetectionLoop();
             
         } catch (error) {
             console.error('Registration camera error:', error);
@@ -1109,6 +1137,8 @@ class VMSSystem {
         }
         
         this.registrationMode = true;
+        console.log('Starting registration for:', userName);
+        
         this.registrationData.descriptors = [];
         this.registrationData.startTime = Date.now();
         
@@ -1116,6 +1146,9 @@ class VMSSystem {
         const progressFill = document.getElementById('progressFill');
         const timeLeftSpan = document.getElementById('timeLeft');
         
+        // Show progress and hide start button
+        document.getElementById('startRegistration').style.display = 'none';
+        document.getElementById('cancelRegistration').textContent = 'Stop Registration';
         progressContainer.style.display = 'block';
         
         const updateProgress = () => {
@@ -1126,6 +1159,7 @@ class VMSSystem {
             progressFill.style.width = progress + '%';
             timeLeftSpan.textContent = timeLeft;
             
+            console.log(`Registration progress: ${progress.toFixed(1)}%, descriptors: ${this.registrationData.descriptors.length}`);
             if (elapsed >= this.registrationData.duration) {
                 this.completeRegistration(userName);
             } else {
@@ -1140,13 +1174,15 @@ class VMSSystem {
         try {
             console.log(`Registration complete. Total descriptors captured: ${this.registrationData.descriptors.length}`);
             
-            if (this.registrationData.descriptors.length === 0) {
-                alert('No face detected during registration. Please ensure:\n- Good lighting\n- Face clearly visible\n- Camera permissions granted\n\nTry again.');
+            if (this.registrationData.descriptors.length < 5) {
+                alert(`Only ${this.registrationData.descriptors.length} face samples captured. Please ensure:\n- Good lighting\n- Face clearly visible and centered\n- Stay still during capture\n- Camera permissions granted\n\nMinimum 5 samples required. Try again.`);
                 this.closeRegistrationModal();
                 return;
             }
             
-            // Filter out very similar descriptors but be less strict
+            console.log('Filtering descriptors for quality...');
+            
+            // Filter out very similar descriptors to ensure variety
             const uniqueDescriptors = this.registrationData.descriptors.filter((desc, index, arr) => {
                 return index === 0 || !arr.slice(0, index).some(prevDesc => {
                     const distance = faceapi.euclideanDistance(desc, prevDesc);
@@ -1156,9 +1192,9 @@ class VMSSystem {
             
             console.log(`Unique descriptors after filtering: ${uniqueDescriptors.length}`);
             
-            // Require fewer samples but ensure quality
-            if (uniqueDescriptors.length < 2) {
-                alert(`Only ${uniqueDescriptors.length} quality face sample(s) captured. Please try again with:\n- Better lighting\n- Face clearly visible\n- Hold still during capture`);
+            // Require minimum quality samples
+            if (uniqueDescriptors.length < 3) {
+                alert(`Only ${uniqueDescriptors.length} unique face sample(s) captured. Please try again with:\n- Better lighting\n- Face clearly visible and centered\n- Move slightly during capture for variety\n\nMinimum 3 unique samples required.`);
                 this.closeRegistrationModal();
                 return;
             }
@@ -1178,7 +1214,11 @@ class VMSSystem {
                 alert(`Registration successful! ${userName} registered with ${uniqueDescriptors.length} face samples.`);
                 await this.loadUsers(); // Reload users
                 this.closeRegistrationModal();
-                document.getElementById('newUserName').value = '';
+            } else {
+                alert(result.error || 'Registration failed');
+                // Reset registration UI but keep modal open
+                document.getElementById('startRegistration').style.display = 'inline-block';
+                document.getElementById('cancelRegistration').textContent = 'Cancel';
             } else {
                 alert(result.error || 'Registration failed');
                 this.closeRegistrationModal();
@@ -1187,6 +1227,9 @@ class VMSSystem {
         } catch (error) {
             console.error('Registration error:', error);
             alert('Registration failed. Please try again.');
+            // Reset registration UI
+            document.getElementById('startRegistration').style.display = 'inline-block';
+            document.getElementById('cancelRegistration').textContent = 'Cancel';
             this.closeRegistrationModal();
         }
     }
