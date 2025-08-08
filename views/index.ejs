@@ -473,156 +473,136 @@ class VMSSystem {
 
   // ---------- Registration: live tracking mask + stable capture ----------
   async setupRegistrationCamera() {
-    try {
-      const regVideo  = document.getElementById('registrationVideo');
-      const regCanvas = document.getElementById('registrationOverlay');
-      const regCtx    = regCanvas.getContext('2d');
+  try {
+    const regVideo  = document.getElementById('registrationVideo');
+    const regCanvas = document.getElementById('registrationOverlay');
+    const regCtx    = regCanvas.getContext('2d');
 
-      if (!this.stream) await this.startCamera();
-      regVideo.srcObject = this.stream;
+    // Reuse main stream
+    if (!this.stream) await this.startCamera();
+    regVideo.srcObject = this.stream;
 
-      await new Promise(r => {
-        regVideo.onloadedmetadata = () => {
-          regCanvas.width = 320;
-          regCanvas.height = 240;
-          r();
-        };
-      });
+    await new Promise(r => {
+      regVideo.onloadedmetadata = () => {
+        regCanvas.width = 320;
+        regCanvas.height = 240;
+        r();
+      };
+    });
 
-      // offscreen snapshot
-      const snap = document.createElement('canvas');
-      snap.width = 320; snap.height = 240;
-      const snapCtx = snap.getContext('2d');
+    // offscreen snapshot
+    const snap = document.createElement('canvas');
+    snap.width = 320; snap.height = 240;
+    const snapCtx = snap.getContext('2d');
 
-      const tfdOpts = new faceapi.TinyFaceDetectorOptions({
-        inputSize: 416,
-        scoreThreshold: 0.4
-      });
+    // detectors
+    const tfdOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.35 });
+    const ssdOpts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35, maxResults: 1 });
 
-      this.registrationDetectionLoop = async () => {
-        try {
-          if (!this.modelsLoaded) return setTimeout(this.registrationDetectionLoop, 200);
-          if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) return;
+    // small on-screen samples counter
+    let lastCount = 0;
+    const drawCounter = (count) => {
+      regCtx.save();
+      regCtx.fillStyle = 'rgba(0,0,0,.55)';
+      regCtx.fillRect(0, 0, 120, 26);
+      regCtx.fillStyle = '#00ff88';
+      regCtx.font = 'bold 12px system-ui, Arial';
+      regCtx.fillText(`Samples: ${count}`, 8, 17);
+      regCtx.restore();
+    };
 
-          // snapshot current frame
-          snapCtx.drawImage(regVideo, 0, 0, snap.width, snap.height);
+    this.registrationDetectionLoop = async () => {
+      try {
+        if (!this.modelsLoaded) return setTimeout(this.registrationDetectionLoop, 200);
+        if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) return;
 
-          const det = await faceapi
-            .detectSingleFace(snap, tfdOpts)
+        // 1) snapshot current frame
+        snapCtx.drawImage(regVideo, 0, 0, snap.width, snap.height);
+
+        // 2) try TinyFaceDetector on snapshot
+        let det = await faceapi
+          .detectSingleFace(snap, tfdOpts)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        // 3) fallback to SSD on snapshot if needed
+        if (!det || !det.descriptor || Number.isNaN(det.descriptor[0])) {
+          det = await faceapi
+            .detectSingleFace(snap, ssdOpts)
             .withFaceLandmarks()
             .withFaceDescriptor();
-
-          regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
-
-          if (det) {
-            const scaleX = regCanvas.width / snap.width;
-            const scaleY = regCanvas.height / snap.height;
-
-            // scale landmarks positions to overlay canvas
-            const posScaled = det.landmarks.positions.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
-
-            // live “face-hugging” mask following jaw + brows
-            this._drawTrackingMask(posScaled, regCtx, regCanvas);
-
-            // label above the box
-            const b = det.detection.box;
-            const box = { x: b.x * scaleX, y: b.y * scaleY, width: b.width * scaleX, height: b.height * scaleY };
-            regCtx.fillStyle = '#00ff88';
-            regCtx.fillRect(box.x, Math.max(0, box.y - 22), Math.max(120, box.width), 20);
-            regCtx.fillStyle = '#000';
-            regCtx.font = 'bold 12px system-ui, Arial';
-            regCtx.fillText('Face Detected ✓', box.x + 6, Math.max(12, box.y - 8));
-
-            // collect descriptor while capture window is active
-            if (this.registrationMode && this.registrationData.startTime) {
-              this.registrationData.descriptors.push(new Float32Array(det.descriptor));
-            }
-          } else {
-            // gentle hint
-            regCtx.fillStyle = 'rgba(0,0,0,.5)';
-            regCtx.fillRect(0, 0, regCanvas.width, regCanvas.height);
-            regCtx.fillStyle = '#ff6666';
-            regCtx.font = 'bold 14px system-ui, Arial';
-            regCtx.textAlign = 'center';
-            regCtx.fillText('Center your face • Good light • Look at camera', regCanvas.width/2, regCanvas.height - 8);
-            regCtx.textAlign = 'left';
-          }
-        } catch (err) {
-          console.error('Registration detection error:', err);
         }
-        if (this.registrationDetectionLoop) setTimeout(this.registrationDetectionLoop, 100);
-      };
 
-      this.registrationDetectionLoop();
-    } catch (error) {
-      console.error('Registration camera error:', error);
-      alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
-    }
-  }
+        // 4) last resort: run on the <video> element directly
+        if (!det || !det.descriptor || Number.isNaN(det.descriptor[0])) {
+          det = await faceapi
+            .detectSingleFace(regVideo, ssdOpts)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+          if (!det) {
+            det = await faceapi
+              .detectSingleFace(regVideo, tfdOpts)
+              .withFaceLandmarks()
+              .withFaceDescriptor();
+          }
+        }
 
-  // draw live “mask” that hugs the face using jaw + brows
-  _drawTrackingMask(positions, ctx, canvas) {
-    // indices: 0–16 jaw, 17–21 left brow, 22–26 right brow
-    const jaw = positions.slice(0, 17);
-    const leftBrow = positions.slice(17, 22);
-    const rightBrow = positions.slice(22, 27);
+        // clear overlay
+        regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
 
-    const path = new Path2D();
-    path.moveTo(jaw[0].x, jaw[0].y);
-    for (let i = 1; i < jaw.length; i++) path.lineTo(jaw[i].x, jaw[i].y);
+        if (det) {
+          // scale
+          const scaleX = regCanvas.width / (det.alignedRect ? det.alignedRect.imageWidth || snap.width : snap.width);
+          const scaleY = regCanvas.height / (det.alignedRect ? det.alignedRect.imageHeight || snap.height : snap.height);
 
-    // go up along right brow → across brows → back to left side
-    [...rightBrow, ...leftBrow.slice().reverse()].forEach(p => path.lineTo(p.x, p.y));
-    path.closePath();
+          // landmarks → tracking mask
+          const pos = det.landmarks.positions.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
+          this._drawTrackingMask(pos, regCtx, regCanvas);
 
-    ctx.save();
-    // dim everything then punch out face region
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#000';
-    ctx.fill(path);
-    ctx.globalCompositeOperation = 'source-over';
+          // label
+          const b = det.detection.box;
+          const box = { x: b.x * scaleX, y: b.y * scaleY, width: b.width * scaleX, height: b.height * scaleY };
+          regCtx.fillStyle = '#00ff88';
+          regCtx.fillRect(box.x, Math.max(0, box.y - 22), Math.max(120, box.width), 20);
+          regCtx.fillStyle = '#000';
+          regCtx.font = 'bold 12px system-ui, Arial';
+          regCtx.fillText('Face Detected ✓', box.x + 6, Math.max(12, box.y - 8));
 
-    ctx.strokeStyle = '#00ff88';
-    ctx.lineWidth = 2;
-    ctx.stroke(path);
-    ctx.restore();
-  }
+          // collect descriptor
+          if (this.registrationMode && this.registrationData.startTime && det.descriptor && !Number.isNaN(det.descriptor[0])) {
+            this.registrationData.descriptors.push(new Float32Array(det.descriptor));
+          }
+        } else {
+          // hints
+          regCtx.fillStyle = 'rgba(0,0,0,.5)';
+          regCtx.fillRect(0, 0, regCanvas.width, regCanvas.height);
+          regCtx.fillStyle = '#ff6666';
+          regCtx.font = 'bold 14px system-ui, Arial';
+          regCtx.textAlign = 'center';
+          regCtx.fillText('Center your face • Good light • Look at camera', regCanvas.width/2, regCanvas.height - 8);
+          regCtx.textAlign = 'left';
+        }
 
-  startRegistration() {
-    const userName = document.getElementById('newUserName').value.trim();
-    if (!userName) {
-      alert('Please enter a name');
-      return;
-    }
-    this._pendingRegistrationUser = userName;
-    this.registrationMode = true;
-    this.registrationData.descriptors = [];
-    this.registrationData.startTime = Date.now();
-
-    const progressContainer = document.getElementById('registrationProgress');
-    const progressFill = document.getElementById('progressFill');
-    const timeLeftSpan = document.getElementById('timeLeft');
-
-    document.getElementById('startRegistration').style.display = 'none';
-    document.getElementById('cancelRegistration').textContent = 'Stop Registration';
-    progressContainer.style.display = 'block';
-    timeLeftSpan.textContent = Math.ceil(this.registrationData.duration / 1000);
-
-    const duration = this.registrationData.duration;
-    const tick = () => {
-      if (!this.registrationMode) return; // canceled
-      const elapsed = Date.now() - this.registrationData.startTime;
-      const progress = Math.min((elapsed / duration) * 100, 100);
-      const timeLeft = Math.max(Math.ceil((duration - elapsed) / 1000), 0);
-      progressFill.style.width = progress + '%';
-      timeLeftSpan.textContent = timeLeft;
-      if (elapsed >= duration) this.completeRegistration(this._pendingRegistrationUser);
-      else setTimeout(tick, 100);
+        // draw counter (even if 0)
+        if (this.registrationMode) {
+          if (this.registrationData.descriptors.length !== lastCount) {
+            lastCount = this.registrationData.descriptors.length;
+          }
+          drawCounter(lastCount);
+        }
+      } catch (err) {
+        console.error('Registration detection error:', err);
+      }
+      if (this.registrationDetectionLoop) setTimeout(this.registrationDetectionLoop, 120);
     };
-    tick();
+
+    this.registrationDetectionLoop();
+  } catch (error) {
+    console.error('Registration camera error:', error);
+    alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
   }
+}
+
 
   async completeRegistration(userName) {
     try {
