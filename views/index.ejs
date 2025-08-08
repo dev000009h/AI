@@ -1,86 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VMS - Video Management System</title>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VMS - Video Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
 </head>
 <body>
 
 <div class="vms-container">
-    <div class="vms-header">
-        <h1>VMS</h1>
-        <div class="camera-controls">
-            <select id="cameraSelect" class="camera-selector">
-                <option value="">Loading cameras...</option>
-            </select>
-            <button id="flipCamera" class="flip-btn" title="Flip Camera">📷</button>
-            <button id="registerUserBtn" class="register-btn" title="Register New User">👤 Register</button>
-            <button id="manageUsersBtn" class="manage-btn" title="Manage Users">⚙️ Manage</button>
-        </div>
+  <div class="vms-header">
+    <h1>VMS</h1>
+    <div class="camera-controls">
+      <select id="cameraSelect" class="camera-selector">
+        <option value="">Loading cameras...</option>
+      </select>
+      <button id="flipCamera" class="flip-btn" title="Flip Camera">📷</button>
+      <button id="registerUserBtn" class="register-btn" title="Register New User">👤 Register</button>
+      <button id="manageUsersBtn" class="manage-btn" title="Manage Users">⚙️ Manage</button>
     </div>
-    
-    <div class="camera-feed-container">
-        <div class="video-wrapper">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-        </div>
-        
-        <div id="recognitionInfo" class="recognition-overlay">
-            <div id="userInfo" class="user-info"></div>
-        </div>
+  </div>
+
+  <div class="camera-feed-container">
+    <div class="video-wrapper">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
     </div>
-    
-    <div id="statusBar" class="status-bar">
-        <span id="statusText">Initializing VMS...</span>
-        <span id="faceCount" class="face-counter">0 faces detected</span>
+
+    <div id="recognitionInfo" class="recognition-overlay">
+      <div id="userInfo" class="user-info"></div>
     </div>
+  </div>
+
+  <div id="statusBar" class="status-bar">
+    <span id="statusText">Initializing VMS...</span>
+    <span id="faceCount" class="face-counter">0 faces detected</span>
+  </div>
 </div>
 
 <!-- Registration Modal -->
 <div id="registrationModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Register New User</h3>
-            <button id="closeModal" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="newUserName">Full Name:</label>
-                <input type="text" id="newUserName" placeholder="Enter full name" required>
-            </div>
-            <div class="registration-preview">
-                <video id="registrationVideo" width="300" height="225" autoplay muted playsinline></video>
-                <canvas id="registrationOverlay" width="300" height="225"></canvas>
-            </div>
-            <div id="registrationProgress" class="progress-container" style="display: none;">
-                <div class="progress-bar">
-                    <div id="progressFill" class="progress-fill"></div>
-                </div>
-                <p id="progressText">Capturing facial data... <span id="timeLeft">5</span>s</p>
-            </div>
-            <div class="modal-actions">
-                <button id="startRegistration" class="btn btn-primary">Start Registration</button>
-                <button id="cancelRegistration" class="btn btn-secondary">Cancel</button>
-            </div>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Register New User</h3>
+      <button id="closeModal" class="close-btn">&times;</button>
     </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="newUserName">Full Name:</label>
+        <input type="text" id="newUserName" placeholder="Enter full name" required>
+      </div>
+      <div class="registration-preview">
+        <video id="registrationVideo" width="300" height="225" autoplay muted playsinline></video>
+        <canvas id="registrationOverlay" width="300" height="225"></canvas>
+      </div>
+      <div id="registrationProgress" class="progress-container" style="display: none;">
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <p id="progressText">Capturing facial data... <span id="timeLeft">5</span>s</p>
+      </div>
+      <div class="modal-actions">
+        <button id="startRegistration" class="btn btn-primary">Start Registration</button>
+        <button id="cancelRegistration" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- User Management Modal -->
 <div id="userManagementModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>User Management</h3>
-            <button id="closeUserModal" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="usersList" class="users-list">
-                <p>Loading users...</p>
-            </div>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>User Management</h3>
+      <button id="closeUserModal" class="close-btn">&times;</button>
     </div>
+    <div class="modal-body">
+      <div id="usersList" class="users-list">
+        <p>Loading users...</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -88,84 +88,84 @@
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; overflow: hidden; height: 100vh; }
 .vms-container { height: 100vh; display: flex; flex-direction: column; }
 
-.vms-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 100; }
+.vms-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(0,0,0,.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,.1); z-index: 100; }
 .vms-header h1 { font-size: 2rem; font-weight: 300; letter-spacing: 3px; color: #00ff88; }
 .camera-controls { display: flex; gap: 10px; align-items: center; }
-.camera-selector { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; min-width: 200px; }
+.camera-selector { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: .9rem; min-width: 200px; }
 .camera-selector option { background: #333; color: #fff; }
-.flip-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease; }
-.flip-btn:hover { background: rgba(255, 255, 255, 0.2); }
-.register-btn { background: rgba(0, 255, 136, 0.2); border: 1px solid rgba(0, 255, 136, 0.4); color: #00ff88; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
-.register-btn:hover { background: rgba(0, 255, 136, 0.3); transform: translateY(-1px); }
-.manage-btn { background: rgba(255, 165, 0, 0.2); border: 1px solid rgba(255, 165, 0, 0.4); color: #ffa500; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
-.manage-btn:hover { background: rgba(255, 165, 0, 0.3); transform: translateY(-1px); }
+.flip-btn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; transition: .3s; }
+.flip-btn:hover { background: rgba(255,255,255,.2); }
+.register-btn { background: rgba(0,255,136,.2); border: 1px solid rgba(0,255,136,.4); color: #00ff88; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: .9rem; font-weight: 500; transition: .3s; display: flex; align-items: center; gap: 5px; }
+.register-btn:hover { background: rgba(0,255,136,.3); transform: translateY(-1px); }
+.manage-btn { background: rgba(255,165,0,.2); border: 1px solid rgba(255,165,0,.4); color: #ffa500; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: .9rem; font-weight: 500; transition: .3s; display: flex; align-items: center; gap: 5px; }
+.manage-btn:hover { background: rgba(255,165,0,.3); transform: translateY(-1px); }
 
 .camera-feed-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; background: #111; }
 .video-wrapper { position: relative; max-width: 100%; max-height: 100%; }
-#video { width: 100%; height: auto; max-height: calc(100vh - 120px); border-radius: 8px; box-shadow: 0 0 30px rgba(0, 255, 136, 0.3); }
+#video { width: 100%; height: auto; max-height: calc(100vh - 120px); border-radius: 8px; box-shadow: 0 0 30px rgba(0,255,136,.3); }
 #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
 .recognition-overlay { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 50; }
-.user-info { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 10px; border-left: 4px solid #00ff88; display: none; }
+.user-info { background: rgba(0,0,0,.8); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 10px; border-left: 4px solid #00ff88; display: none; }
 .user-info.recognized { border-left-color: #00ff88; display: block; }
 .user-info.unknown { border-left-color: #ff4444; display: block; }
 .user-info h3 { margin: 0 0 5px 0; font-size: 1.2rem; }
-.user-info p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
+.user-info p { margin: 0; opacity: .8; font-size: .9rem; }
 
-.status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; background: rgba(0, 0, 0, 0.9); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; }
+.status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; background: rgba(0,0,0,.9); border-top: 1px solid rgba(255,255,255,.1); font-size: .9rem; }
 .face-counter { color: #00ff88; font-weight: 500; }
 
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 1000; backdrop-filter: blur(5px); }
-.modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border-radius: 15px; padding: 0; max-width: 500px; width: 90%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 1000; backdrop-filter: blur(5px); }
+.modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border-radius: 15px; padding: 0; max-width: 500px; width: 90%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.5); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .modal-header h3 { margin: 0; color: #00ff88; }
-.close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.3s ease; }
-.close-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; transition: .3s; }
+.close-btn:hover { background: rgba(255,255,255,.1); }
 .modal-body { padding: 25px; }
 .form-group { margin-bottom: 20px; }
 .form-group label { display: block; margin-bottom: 8px; color: #ccc; font-weight: 500; }
-.form-group input { width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; font-size: 1rem; }
-.form-group input:focus { outline: none; border-color: #00ff88; box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2); }
+.form-group input { width: 100%; padding: 12px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 6px; color: #fff; font-size: 1rem; }
+.form-group input:focus { outline: none; border-color: #00ff88; box-shadow: 0 0 0 2px rgba(0,255,136,.2); }
 
 .registration-preview { position: relative; text-align: center; margin: 20px 0; }
 #registrationVideo { border-radius: 8px; background: #000; }
 #registrationOverlay { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
 
 .progress-container { margin: 20px 0; }
-.progress-bar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00cc6a); width: 0%; transition: width 0.1s ease; }
+.progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00cc6a); width: 0%; transition: width .1s; }
 #progressText { text-align: center; margin-top: 10px; color: #ccc; }
 
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
-.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease; }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: .9rem; font-weight: 500; transition: .3s; }
 .btn-primary { background: #00ff88; color: #000; }
 .btn-primary:hover { background: #00cc6a; transform: translateY(-1px); }
-.btn-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
-.btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+.btn-secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.btn-secondary:hover { background: rgba(255,255,255,.2); }
 
 .users-list { max-height: 400px; overflow-y: auto; }
-.user-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border-left: 3px solid #00ff88; }
+.user-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,.05); border-radius: 8px; border-left: 3px solid #00ff88; }
 .user-details h4 { margin: 0 0 5px 0; color: #00ff88; font-size: 1.1rem; }
-.user-details p { margin: 0; color: #ccc; font-size: 0.9rem; }
+.user-details p { margin: 0; color: #ccc; font-size: .9rem; }
 .user-actions { display: flex; gap: 10px; }
-.btn-danger { background: rgba(255, 68, 68, 0.2); border: 1px solid rgba(255, 68, 68, 0.4); color: #ff4444; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.3s ease; }
-.btn-danger:hover { background: rgba(255, 68, 68, 0.3); transform: translateY(-1px); }
+.btn-danger { background: rgba(255,68,68,.2); border: 1px solid rgba(255,68,68,.4); color: #ff4444; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: .8rem; transition: .3s; }
+.btn-danger:hover { background: rgba(255,68,68,.3); transform: translateY(-1px); }
 .empty-users { text-align: center; padding: 40px 20px; color: #888; }
 .empty-users h4 { margin-bottom: 10px; color: #ccc; }
 
 @media (max-width: 768px) {
-    .vms-header { padding: 10px 15px; }
-    .vms-header h1 { font-size: 1.5rem; letter-spacing: 2px; }
-    .camera-selector { min-width: 150px; font-size: 0.8rem; }
-    .register-btn, .manage-btn { padding: 6px 12px; font-size: 0.8rem; }
-    .recognition-overlay { top: 10px; left: 10px; right: 10px; }
-    .user-info { padding: 10px 15px; }
-    .status-bar { padding: 8px 15px; font-size: 0.8rem; }
-    .modal-content { width: 95%; margin: 20px; }
-    .modal-header, .modal-body { padding: 15px 20px; }
+  .vms-header { padding: 10px 15px; }
+  .vms-header h1 { font-size: 1.5rem; letter-spacing: 2px; }
+  .camera-selector { min-width: 150px; font-size: .8rem; }
+  .register-btn, .manage-btn { padding: 6px 12px; font-size: .8rem; }
+  .recognition-overlay { top: 10px; left: 10px; right: 10px; }
+  .user-info { padding: 10px 15px; }
+  .status-bar { padding: 8px 15px; font-size: .8rem; }
+  .modal-content { width: 95%; margin: 20px; }
+  .modal-header, .modal-body { padding: 15px 20px; }
 }
-.face-box { border: 2px solid #00ff88; background: rgba(0, 255, 136, 0.1); }
-.face-box.unknown { border-color: #ff4444; background: rgba(255, 68, 68, 0.1); }
+.face-box { border: 2px solid #00ff88; background: rgba(0,255,136,.1); }
+.face-box.unknown { border-color: #ff4444; background: rgba(255,68,68,.1); }
 </style>
 
 <script>
@@ -181,10 +181,9 @@ class VMSSystem {
     this.labeledDescriptors = [];
     this.cameras = [];
     this.currentCameraIndex = 0;
-    this.detectionHistory = new Map();
+
     this.registrationMode = false;
-    this.registrationData = { descriptors: [], startTime: null, duration: 7000 }; // 7s for better variety
-    this.userManagementModal = null;
+    this.registrationData = { descriptors: [], startTime: null, duration: 7000 }; // 7s capture
 
     this.init();
   }
@@ -201,13 +200,15 @@ class VMSSystem {
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
     try {
       this.updateStatus('Loading AI models...');
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      // for main stream
       await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      // for registration modal (more stable on small frames)
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+
       this.modelsLoaded = true;
       this.updateStatus('AI models loaded successfully');
-      console.log('VMS: Face recognition models loaded');
     } catch (error) {
       console.error('Error loading models:', error);
       this.updateStatus('Error loading AI models');
@@ -217,80 +218,80 @@ class VMSSystem {
   async loadCameras() {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      this.cameras = devices.filter(device => device.kind === 'videoinput');
+      this.cameras = devices.filter(d => d.kind === 'videoinput');
 
-      const cameraSelect = document.getElementById('cameraSelect');
-      cameraSelect.innerHTML = '';
-
-      if (this.cameras.length === 0) {
-        cameraSelect.innerHTML = '<option>No cameras found</option>';
+      const sel = document.getElementById('cameraSelect');
+      sel.innerHTML = '';
+      if (!this.cameras.length) {
+        sel.innerHTML = '<option>No cameras found</option>';
         return;
       }
-
-      this.cameras.forEach((camera, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = camera.label || `Camera ${index + 1}`;
-        cameraSelect.appendChild(option);
+      this.cameras.forEach((cam, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = cam.label || `Camera ${i+1}`;
+        sel.appendChild(opt);
       });
-
-      cameraSelect.value = this.currentCameraIndex;
-    } catch (error) {
-      console.error('Error loading cameras:', error);
+      sel.value = this.currentCameraIndex;
+    } catch (e) {
+      console.error('Error loading cameras:', e);
       this.updateStatus('Error accessing cameras');
     }
   }
 
   async loadUsers() {
     try {
-      const response = await fetch('/api/users');
-      const users = await response.json();
+      const res = await fetch('/api/users');
+      const users = await res.json();
 
       if (!Array.isArray(users) || users.length === 0) {
-        this.updateStatus('No registered users - Ready to register new faces');
         this.faceMatcher = null;
+        this.updateStatus('No registered users - Ready to register new faces');
         return;
       }
 
-      this.labeledDescriptors = users.map(user => {
-        const descriptors = user.descriptors.map(desc => new Float32Array(desc));
-        return new faceapi.LabeledFaceDescriptors(user.name, descriptors);
+      this.labeledDescriptors = users.map(u => {
+        const desc = u.descriptors.map(a => new Float32Array(a));
+        return new faceapi.LabeledFaceDescriptors(u.name, desc);
       });
-
       this.faceMatcher = new faceapi.FaceMatcher(this.labeledDescriptors, 0.6);
       this.updateStatus(`${users.length} users loaded`);
-    } catch (error) {
-      console.error('Error loading users:', error);
+    } catch (e) {
+      console.error('Error loading users:', e);
       this.updateStatus('Error loading users');
     }
   }
 
   setupEventListeners() {
-    document.getElementById('cameraSelect').addEventListener('change', (e) => {
-      this.currentCameraIndex = parseInt(e.target.value);
-      this.switchCamera();
-    });
+    document.getElementById('cameraSelect')
+      .addEventListener('change', (e) => { this.currentCameraIndex = parseInt(e.target.value); this.switchCamera(); });
 
-    document.getElementById('flipCamera').addEventListener('click', () => this.flipCamera());
-    document.getElementById('registerUserBtn').addEventListener('click', () => this.showRegistrationModal());
-    document.getElementById('manageUsersBtn').addEventListener('click', () => this.showUserManagementModal());
+    document.getElementById('flipCamera')
+      .addEventListener('click', () => this.flipCamera());
 
-    // Registration modal
-    document.getElementById('closeModal').addEventListener('click', () => this.closeRegistrationModal());
-document.getElementById('startRegistration')
-  .addEventListener('click', () => this.startRegistration());
-    document.getElementById('cancelRegistration').addEventListener('click', () => this.closeRegistrationModal());
+    document.getElementById('registerUserBtn')
+      .addEventListener('click', () => this.showRegistrationModal());
 
-    // User management modal
-    document.getElementById('closeUserModal').addEventListener('click', () => this.closeUserManagementModal());
+    document.getElementById('manageUsersBtn')
+      .addEventListener('click', () => this.showUserManagementModal());
 
-    // Close on backdrop click
-    document.getElementById('registrationModal').addEventListener('click', (e) => {
-      if (e.target.id === 'registrationModal') this.closeRegistrationModal();
-    });
-    document.getElementById('userManagementModal').addEventListener('click', (e) => {
-      if (e.target.id === 'userManagementModal') this.closeUserManagementModal();
-    });
+    document.getElementById('closeModal')
+      .addEventListener('click', () => this.closeRegistrationModal());
+
+    document.getElementById('startRegistration')
+      .addEventListener('click', () => this.startRegistration());
+
+    document.getElementById('cancelRegistration')
+      .addEventListener('click', () => this.closeRegistrationModal());
+
+    document.getElementById('closeUserModal')
+      .addEventListener('click', () => this.closeUserManagementModal());
+
+    document.getElementById('registrationModal')
+      .addEventListener('click', (e) => { if (e.target.id === 'registrationModal') this.closeRegistrationModal(); });
+
+    document.getElementById('userManagementModal')
+      .addEventListener('click', (e) => { if (e.target.id === 'userManagementModal') this.closeUserManagementModal(); });
   }
 
   async startVMS() {
@@ -306,41 +307,38 @@ document.getElementById('startRegistration')
       this.updateStatus('VMS Active - Monitoring');
     } catch (error) {
       console.error('Error starting VMS:', error);
-      let errorMessage = 'Error starting camera';
-      if (error.name === 'NotAllowedError') errorMessage = 'Camera access denied. Please allow camera permissions and refresh the page.';
-      else if (error.name === 'NotFoundError') errorMessage = 'No camera found. Please connect a camera and refresh the page.';
-      else if (error.name === 'NotReadableError') errorMessage = 'Camera is already in use by another application. Please close other apps using the camera.';
-      else if (error.name === 'OverconstrainedError') errorMessage = 'Camera does not support the required settings. Trying with default settings...';
-      else if (error.name === 'SecurityError') errorMessage = 'Camera access blocked due to security restrictions. Please use HTTPS or localhost.';
-      this.updateStatus(errorMessage);
+      let msg = 'Error starting camera';
+      if (error.name === 'NotAllowedError') msg = 'Camera access denied. Allow permissions and refresh.';
+      else if (error.name === 'NotFoundError') msg = 'No camera found.';
+      else if (error.name === 'NotReadableError') msg = 'Camera in use by another app.';
+      else if (error.name === 'OverconstrainedError') msg = 'Camera doesn’t support requested settings.';
+      else if (error.name === 'SecurityError') msg = 'Use HTTPS or localhost.';
+      this.updateStatus(msg);
     }
   }
 
   async startCamera() {
-    if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
-    }
+    if (this.stream) this.stream.getTracks().forEach(t => t.stop());
 
     const constraints = {
       video: {
         deviceId: this.cameras[this.currentCameraIndex]?.deviceId,
         width: { ideal: 640 },
         height: { ideal: 480 },
-        frameRate: { ideal: 15, max: 30 },
+        frameRate: { ideal: 15, max: 30 }
       }
     };
-
     this.stream = await navigator.mediaDevices.getUserMedia(constraints);
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('overlay');
     this.ctx = this.canvas.getContext('2d');
     this.video.srcObject = this.stream;
 
-    return new Promise(resolve => {
+    return new Promise(res => {
       this.video.onloadedmetadata = () => {
         this.canvas.width = this.video.videoWidth;
         this.canvas.height = this.video.videoHeight;
-        resolve();
+        res();
       };
     });
   }
@@ -370,90 +368,66 @@ document.getElementById('startRegistration')
         .withFaceDescriptors();
 
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
       const faceCount = detections.length;
       document.getElementById('faceCount').textContent = `${faceCount} face${faceCount !== 1 ? 's' : ''} detected`;
 
-      if (detections.length > 0) {
-        const resizedDetections = faceapi.resizeResults(detections, {
+      if (detections.length) {
+        const resized = faceapi.resizeResults(detections, {
           width: this.video.videoWidth,
           height: this.video.videoHeight
         });
-        this.processDetections(resizedDetections);
+        this.processDetections(resized);
       } else {
         this.hideUserInfo();
       }
-    } catch (error) {
-      console.error('Detection error:', error);
-    }
+    } catch (e) { console.error('Detection error:', e); }
 
     setTimeout(() => this.detectFaces(), 100);
   }
 
-  processDetections(detections) {
-    const recognizedUsers = [];
-    const unknownFaces = [];
+  processDetections(dets) {
+    const rec = [], unk = [];
+    for (const d of dets) {
+      const box = d.detection.box;
 
-    for (let i = 0; i < detections.length; i++) {
-      const detection = detections[i];
-      const box = detection.detection.box;
-
-      // Draw base box
-      this.ctx.strokeStyle = '#00ff88';
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-      if (this.faceMatcher && detection.descriptor) {
-        const match = this.faceMatcher.findBestMatch(detection.descriptor);
+      if (this.faceMatcher && d.descriptor) {
+        const match = this.faceMatcher.findBestMatch(d.descriptor);
         if (match.label !== 'unknown' && match.distance < 0.5) {
-          const confidence = Math.round((1 - match.distance) * 100);
-          recognizedUsers.push({ name: match.label, confidence, box });
-
-          this.ctx.strokeStyle = '#00ff88';
-          this.ctx.lineWidth = 2;
-          this.ctx.strokeRect(box.x, box.y, box.width, box.height);
-          this.ctx.fillStyle = '#00ff88';
-          this.ctx.fillRect(box.x, box.y - 25, Math.max(box.width, 120), 25);
-          this.ctx.fillStyle = '#000';
-          this.ctx.font = 'bold 12px Arial';
-          this.ctx.fillText(`${match.label} (${confidence}%)`, box.x + 5, box.y - 8);
+          const conf = Math.round((1 - match.distance) * 100);
+          rec.push({ name: match.label, confidence: conf, box });
+          this._drawLabeledBox(box, `${match.label} (${conf}%)`, true);
         } else {
-          unknownFaces.push({ box });
-          this.ctx.strokeStyle = '#ff4444';
-          this.ctx.lineWidth = 2;
-          this.ctx.strokeRect(box.x, box.y, box.width, box.height);
-          this.ctx.fillStyle = '#ff4444';
-          this.ctx.fillRect(box.x, box.y - 25, Math.max(box.width, 80), 25);
-          this.ctx.fillStyle = '#fff';
-          this.ctx.font = 'bold 12px Arial';
-          this.ctx.fillText('Unknown', box.x + 5, box.y - 8);
+          unk.push({ box });
+          this._drawLabeledBox(box, 'Unknown', false);
         }
       } else {
-        unknownFaces.push({ box });
-        this.ctx.strokeStyle = '#ff4444';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(box.x, box.y, box.width, box.height);
-        this.ctx.fillStyle = '#ff4444';
-        this.ctx.fillRect(box.x, box.y - 25, Math.max(box.width, 80), 25);
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = 'bold 12px Arial';
-        this.ctx.fillText('Unknown', box.x + 5, box.y - 8);
+        unk.push({ box });
+        this._drawLabeledBox(box, 'Unknown', false);
       }
     }
-
-    this.updateUserInfo(recognizedUsers, unknownFaces);
+    this.updateUserInfo(rec, unk);
   }
 
-  updateUserInfo(recognizedUsers, unknownFaces) {
+  _drawLabeledBox(box, label, ok) {
+    this.ctx.strokeStyle = ok ? '#00ff88' : '#ff4444';
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+    this.ctx.fillStyle = ok ? '#00ff88' : '#ff4444';
+    this.ctx.fillRect(box.x, box.y - 25, Math.max(box.width, 120), 25);
+    this.ctx.fillStyle = ok ? '#000' : '#fff';
+    this.ctx.font = 'bold 12px Arial';
+    this.ctx.fillText(label, box.x + 5, box.y - 8);
+  }
+
+  updateUserInfo(recognized, unknown) {
     const userInfo = document.getElementById('userInfo');
     userInfo.style.display = 'block';
-
-    if (recognizedUsers.length > 0) {
-      const user = recognizedUsers[0];
-      userInfo.innerHTML = `<h3>✅ ${user.name}</h3><p>Confidence: ${user.confidence}% | Access Granted</p>`;
+    if (recognized.length) {
+      const u = recognized[0];
+      userInfo.innerHTML = `<h3>✅ ${u.name}</h3><p>Confidence: ${u.confidence}% | Access Granted</p>`;
       userInfo.className = 'user-info recognized';
-    } else if (unknownFaces.length > 0) {
-      userInfo.innerHTML = `<h3>⚠️ Unknown Person</h3><p>${unknownFaces.length} unrecognized face${unknownFaces.length > 1 ? 's' : ''} detected</p>`;
+    } else if (unknown.length) {
+      userInfo.innerHTML = `<h3>⚠️ Unknown Person</h3><p>${unknown.length} unrecognized face${unknown.length > 1 ? 's' : ''} detected</p>`;
       userInfo.className = 'user-info unknown';
     } else {
       this.hideUserInfo();
@@ -485,10 +459,7 @@ document.getElementById('startRegistration')
     this.registrationDetectionLoop = null;
 
     const regVideo = document.getElementById('registrationVideo');
-    if (regVideo.srcObject && regVideo.srcObject !== this.stream) {
-      // We reused main stream; don’t stop it. Only stop if it was a separate stream (it won’t be in this impl).
-      regVideo.srcObject.getTracks().forEach(t => t.stop());
-    }
+    // We reused main stream; just detach
     regVideo.srcObject = null;
 
     const regCanvas = document.getElementById('registrationOverlay');
@@ -500,173 +471,190 @@ document.getElementById('startRegistration')
     document.getElementById('cancelRegistration').textContent = 'Cancel';
   }
 
+  // ---------- Registration: live tracking mask + stable capture ----------
   async setupRegistrationCamera() {
-  try {
-    const regVideo = document.getElementById('registrationVideo');
-    const regCanvas = document.getElementById('registrationOverlay');
-    const regCtx = regCanvas.getContext('2d');
+    try {
+      const regVideo  = document.getElementById('registrationVideo');
+      const regCanvas = document.getElementById('registrationOverlay');
+      const regCtx    = regCanvas.getContext('2d');
 
-    // Reuse main stream
-    if (!this.stream) await this.startCamera();
-    regVideo.srcObject = this.stream;
+      if (!this.stream) await this.startCamera();
+      regVideo.srcObject = this.stream;
 
-    await new Promise(resolve => {
-      regVideo.onloadedmetadata = () => {
-        // NOTE: keep a slightly larger working canvas for better detection
-        regCanvas.width = 320;
-        regCanvas.height = 240;
-        resolve();
-      };
-    });
+      await new Promise(r => {
+        regVideo.onloadedmetadata = () => {
+          regCanvas.width = 320;
+          regCanvas.height = 240;
+          r();
+        };
+      });
 
-    // Offscreen canvas to snapshot the current frame (improves stability)
-    const snap = document.createElement('canvas');
-    snap.width = 320;
-    snap.height = 240;
-    const snapCtx = snap.getContext('2d');
+      // offscreen snapshot
+      const snap = document.createElement('canvas');
+      snap.width = 320; snap.height = 240;
+      const snapCtx = snap.getContext('2d');
 
-    // draw a simple “face mask” guide
-    const drawGuide = () => {
-      regCtx.save();
-      regCtx.globalAlpha = 0.25;
-      regCtx.fillStyle = '#000';
-      regCtx.fillRect(0, 0, regCanvas.width, regCanvas.height);
-      regCtx.globalAlpha = 1;
+      const tfdOpts = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 416,
+        scoreThreshold: 0.4
+      });
 
-      // cut out an ellipse in the middle
-      regCtx.globalCompositeOperation = 'destination-out';
-      regCtx.beginPath();
-      regCtx.ellipse(regCanvas.width/2, regCanvas.height/2, 90, 120, 0, 0, Math.PI*2);
-      regCtx.fill();
-      regCtx.globalCompositeOperation = 'source-over';
+      this.registrationDetectionLoop = async () => {
+        try {
+          if (!this.modelsLoaded) return setTimeout(this.registrationDetectionLoop, 200);
+          if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) return;
 
-      regCtx.strokeStyle = '#00ff88';
-      regCtx.lineWidth = 2;
-      regCtx.beginPath();
-      regCtx.ellipse(regCanvas.width/2, regCanvas.height/2, 90, 120, 0, 0, Math.PI*2);
-      regCtx.stroke();
+          // snapshot current frame
+          snapCtx.drawImage(regVideo, 0, 0, snap.width, snap.height);
 
-      regCtx.fillStyle = '#ccc';
-      regCtx.font = 'bold 12px system-ui, Arial';
-      regCtx.textAlign = 'center';
-      regCtx.fillText('Align your face inside the oval', regCanvas.width/2, 20);
-      regCtx.restore();
-    };
+          const det = await faceapi
+            .detectSingleFace(snap, tfdOpts)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
 
-    const tfdOpts = new faceapi.TinyFaceDetectorOptions({
-      inputSize: 416,        // larger = more accurate
-      scoreThreshold: 0.4    // a bit relaxed for indoor lighting
-    });
+          regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
 
-    this.registrationDetectionLoop = async () => {
-      try {
-        if (!this.modelsLoaded) {
-          setTimeout(this.registrationDetectionLoop, 200);
-          return;
-        }
-        if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) {
-          return;
-        }
+          if (det) {
+            const scaleX = regCanvas.width / snap.width;
+            const scaleY = regCanvas.height / snap.height;
 
-        // 1) Snapshot current frame to offscreen canvas
-        snapCtx.drawImage(regVideo, 0, 0, snap.width, snap.height);
+            // scale landmarks positions to overlay canvas
+            const posScaled = det.landmarks.positions.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
 
-        // 2) Run detection on the snapshot
-        const det = await faceapi
-          .detectSingleFace(snap, tfdOpts)
-          .withFaceLandmarks()
-          .withFaceDescriptor();
+            // live “face-hugging” mask following jaw + brows
+            this._drawTrackingMask(posScaled, regCtx, regCanvas);
 
-        // 3) Clear and redraw guide
-        regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
-        drawGuide();
+            // label above the box
+            const b = det.detection.box;
+            const box = { x: b.x * scaleX, y: b.y * scaleY, width: b.width * scaleX, height: b.height * scaleY };
+            regCtx.fillStyle = '#00ff88';
+            regCtx.fillRect(box.x, Math.max(0, box.y - 22), Math.max(120, box.width), 20);
+            regCtx.fillStyle = '#000';
+            regCtx.font = 'bold 12px system-ui, Arial';
+            regCtx.fillText('Face Detected ✓', box.x + 6, Math.max(12, box.y - 8));
 
-        if (det) {
-          // scale box to overlay canvas
-          const scaleX = regCanvas.width / snap.width;
-          const scaleY = regCanvas.height / snap.height;
-          const box = new faceapi.Box(
-            det.detection.box.x * scaleX,
-            det.detection.box.y * scaleY,
-            det.detection.box.width * scaleX,
-            det.detection.box.height * scaleY
-          );
-
-          // draw box + label
-          regCtx.strokeStyle = '#00ff88';
-          regCtx.lineWidth = 3;
-          regCtx.strokeRect(box.x, box.y, box.width, box.height);
-          regCtx.fillStyle = '#00ff88';
-          regCtx.fillRect(box.x, Math.max(0, box.y - 22), Math.max(120, box.width), 20);
-          regCtx.fillStyle = '#000';
-          regCtx.font = 'bold 12px system-ui, Arial';
-          regCtx.fillText('Face Detected ✓', box.x + 6, Math.max(12, box.y - 8));
-
-          // 4) Collect descriptor while capturing window is active
-          if (this.registrationMode && this.registrationData.startTime) {
-            // keep as Float32Array for proper distance calculations later
-            this.registrationData.descriptors.push(new Float32Array(det.descriptor));
+            // collect descriptor while capture window is active
+            if (this.registrationMode && this.registrationData.startTime) {
+              this.registrationData.descriptors.push(new Float32Array(det.descriptor));
+            }
+          } else {
+            // gentle hint
+            regCtx.fillStyle = 'rgba(0,0,0,.5)';
+            regCtx.fillRect(0, 0, regCanvas.width, regCanvas.height);
+            regCtx.fillStyle = '#ff6666';
+            regCtx.font = 'bold 14px system-ui, Arial';
+            regCtx.textAlign = 'center';
+            regCtx.fillText('Center your face • Good light • Look at camera', regCanvas.width/2, regCanvas.height - 8);
+            regCtx.textAlign = 'left';
           }
-        } else {
-          // hint text
-          regCtx.fillStyle = '#ff6666';
-          regCtx.font = 'bold 14px system-ui, Arial';
-          regCtx.textAlign = 'center';
-          regCtx.fillText('Center your face | Good light | Look at camera', regCanvas.width/2, regCanvas.height - 8);
-          regCtx.textAlign = 'left';
+        } catch (err) {
+          console.error('Registration detection error:', err);
         }
-      } catch (err) {
-        console.error('Registration detection error:', err);
-      }
+        if (this.registrationDetectionLoop) setTimeout(this.registrationDetectionLoop, 100);
+      };
 
-      if (this.registrationDetectionLoop) {
-        setTimeout(this.registrationDetectionLoop, 100);
-      }
-    };
-
-    drawGuide();
-    this.registrationDetectionLoop();
-  } catch (error) {
-    console.error('Registration camera error:', error);
-    alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
+      this.registrationDetectionLoop();
+    } catch (error) {
+      console.error('Registration camera error:', error);
+      alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
+    }
   }
-}
 
+  // draw live “mask” that hugs the face using jaw + brows
+  _drawTrackingMask(positions, ctx, canvas) {
+    // indices: 0–16 jaw, 17–21 left brow, 22–26 right brow
+    const jaw = positions.slice(0, 17);
+    const leftBrow = positions.slice(17, 22);
+    const rightBrow = positions.slice(22, 27);
+
+    const path = new Path2D();
+    path.moveTo(jaw[0].x, jaw[0].y);
+    for (let i = 1; i < jaw.length; i++) path.lineTo(jaw[i].x, jaw[i].y);
+
+    // go up along right brow → across brows → back to left side
+    [...rightBrow, ...leftBrow.slice().reverse()].forEach(p => path.lineTo(p.x, p.y));
+    path.closePath();
+
+    ctx.save();
+    // dim everything then punch out face region
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
+    ctx.fill(path);
+    ctx.globalCompositeOperation = 'source-over';
+
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 2;
+    ctx.stroke(path);
+    ctx.restore();
+  }
+
+  startRegistration() {
+    const userName = document.getElementById('newUserName').value.trim();
+    if (!userName) {
+      alert('Please enter a name');
+      return;
+    }
+    this._pendingRegistrationUser = userName;
+    this.registrationMode = true;
+    this.registrationData.descriptors = [];
+    this.registrationData.startTime = Date.now();
+
+    const progressContainer = document.getElementById('registrationProgress');
+    const progressFill = document.getElementById('progressFill');
+    const timeLeftSpan = document.getElementById('timeLeft');
+
+    document.getElementById('startRegistration').style.display = 'none';
+    document.getElementById('cancelRegistration').textContent = 'Stop Registration';
+    progressContainer.style.display = 'block';
+    timeLeftSpan.textContent = Math.ceil(this.registrationData.duration / 1000);
+
+    const duration = this.registrationData.duration;
+    const tick = () => {
+      if (!this.registrationMode) return; // canceled
+      const elapsed = Date.now() - this.registrationData.startTime;
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      const timeLeft = Math.max(Math.ceil((duration - elapsed) / 1000), 0);
+      progressFill.style.width = progress + '%';
+      timeLeftSpan.textContent = timeLeft;
+      if (elapsed >= duration) this.completeRegistration(this._pendingRegistrationUser);
+      else setTimeout(tick, 100);
+    };
+    tick();
+  }
 
   async completeRegistration(userName) {
     try {
       const samples = this.registrationData.descriptors.length;
-      if (samples < 5) {
-        alert(`Only ${samples} face samples captured. Try again with better lighting and keep your face centered.`);
+      if (samples < 3) { // start lenient; bump to 5 after confirming it works for you
+        alert(`Only ${samples} face sample(s) captured. Try again with better lighting and keep your face centered.`);
         this.closeRegistrationModal();
         return;
       }
 
-      // Filter near-duplicates to keep variety
+      // Keep varied samples (filter near-duplicates)
       const src = this.registrationData.descriptors;
-      const uniqueDescriptors = src.filter((d, i) =>
-        i === 0 || !src.slice(0, i).some(p => faceapi.euclideanDistance(d, p) < 0.1)
+      const unique = src.filter((d, i) =>
+        i === 0 || !src.slice(0, i).some(p => faceapi.euclideanDistance(d, p) < 0.12)
       );
 
-      if (uniqueDescriptors.length < 3) {
-        alert(`Only ${uniqueDescriptors.length} unique sample(s). Move slightly and try again.`);
+      if (unique.length < 3) {
+        alert(`Only ${unique.length} unique sample(s). Move your head slightly and try again.`);
         this.closeRegistrationModal();
         return;
       }
 
-      // Convert to plain arrays for transport
-      const payload = uniqueDescriptors.map(d => Array.from(d));
-
-      const response = await fetch('/api/register', {
+      const payload = unique.map(d => Array.from(d));
+      const resp = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: userName, descriptors: payload })
       });
+      const result = await resp.json();
 
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(`Registration successful! ${userName} registered with ${uniqueDescriptors.length} face samples.`);
+      if (resp.ok) {
+        alert(`Registration successful! ${userName} registered with ${unique.length} face samples.`);
         await this.loadUsers();
         this.closeRegistrationModal();
       } else {
@@ -674,8 +662,8 @@ document.getElementById('startRegistration')
         document.getElementById('startRegistration').style.display = 'inline-block';
         document.getElementById('cancelRegistration').textContent = 'Cancel';
       }
-    } catch (error) {
-      console.error('Registration error:', error);
+    } catch (e) {
+      console.error('Registration error:', e);
       alert('Registration failed. Please try again.');
       document.getElementById('startRegistration').style.display = 'inline-block';
       document.getElementById('cancelRegistration').textContent = 'Cancel';
@@ -695,12 +683,11 @@ document.getElementById('startRegistration')
   async loadUsersList() {
     const usersList = document.getElementById('usersList');
     usersList.innerHTML = '<p>Loading users...</p>';
-
     try {
-      const response = await fetch('/api/users');
-      const users = await response.json();
+      const res = await fetch('/api/users');
+      const users = await res.json();
 
-      if (!Array.isArray(users) || users.length === 0) {
+      if (!Array.isArray(users) || !users.length) {
         usersList.innerHTML = `
           <div class="empty-users">
             <h4>No Users Registered</h4>
@@ -709,37 +696,35 @@ document.getElementById('startRegistration')
         return;
       }
 
-      usersList.innerHTML = users.map(user => `
+      usersList.innerHTML = users.map(u => `
         <div class="user-item">
           <div class="user-details">
-            <h4>${user.name}</h4>
-            <p>Registered: ${new Date(user.createdAt).toLocaleDateString()}</p>
-            <p>Face samples: ${user.descriptors.length}</p>
+            <h4>${u.name}</h4>
+            <p>Registered: ${new Date(u.createdAt).toLocaleDateString()}</p>
+            <p>Face samples: ${u.descriptors.length}</p>
           </div>
           <div class="user-actions">
-            <button class="btn-danger" onclick="vmsSystem.deleteUser('${user.id}', '${user.name}')">🗑️ Delete</button>
+            <button class="btn-danger" onclick="vmsSystem.deleteUser('${u.id}', '${u.name}')">🗑️ Delete</button>
           </div>
         </div>
       `).join('');
-    } catch (error) {
-      console.error('Error loading users list:', error);
+    } catch (e) {
+      console.error('Error loading users list:', e);
       usersList.innerHTML = '<p>Error loading users</p>';
     }
   }
 
-  async deleteUser(userId, userName) {
-    if (!confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
+  async deleteUser(userId, name) {
+    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
     try {
-      const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
-      if (response.ok) {
-        alert(`User "${userName}" deleted successfully`);
+      const resp = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      if (resp.ok) {
+        alert(`User "${name}" deleted successfully`);
         await this.loadUsersList();
         await this.loadUsers();
-      } else {
-        alert('Failed to delete user');
-      }
-    } catch (error) {
-      console.error('Delete error:', error);
+      } else alert('Failed to delete user');
+    } catch (e) {
+      console.error('Delete error:', e);
       alert('Error deleting user');
     }
   }
