@@ -277,7 +277,8 @@ class VMSSystem {
 
     // Registration modal
     document.getElementById('closeModal').addEventListener('click', () => this.closeRegistrationModal());
-    document.getElementById('startRegistration').addEventListener('click', () => this.startRegistration());
+   document.getElementById('startRegistration')
+  .addEventListener('click', this.startRegistration.bind(this));
     document.getElementById('cancelRegistration').addEventListener('click', () => this.closeRegistrationModal());
 
     // User management modal
