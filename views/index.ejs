@@ -201,6 +201,7 @@ class VMSSystem {
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
     try {
       this.updateStatus('Loading AI models...');
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
@@ -499,122 +500,137 @@ class VMSSystem {
   }
 
   async setupRegistrationCamera() {
-    try {
-      const regVideo = document.getElementById('registrationVideo');
-      const regCanvas = document.getElementById('registrationOverlay');
-      const regCtx = regCanvas.getContext('2d');
+  try {
+    const regVideo = document.getElementById('registrationVideo');
+    const regCanvas = document.getElementById('registrationOverlay');
+    const regCtx = regCanvas.getContext('2d');
 
-      // Reuse main stream for reliability
-      if (!this.stream) await this.startCamera();
-      regVideo.srcObject = this.stream;
+    // Reuse main stream
+    if (!this.stream) await this.startCamera();
+    regVideo.srcObject = this.stream;
 
-      await new Promise(resolve => {
-        regVideo.onloadedmetadata = () => {
-          regCanvas.width = 300;
-          regCanvas.height = 225;
-          resolve();
-        };
-      });
-
-      this.registrationDetectionLoop = async () => {
-        try {
-          if (!this.modelsLoaded) {
-            setTimeout(this.registrationDetectionLoop, 200);
-            return;
-          }
-          if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) {
-            return;
-          }
-
-          const detections = await faceapi
-            .detectAllFaces(regVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5, maxResults: 1 }))
-            .withFaceLandmarks()
-            .withFaceDescriptors();
-
-          regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
-
-          const resized = faceapi.resizeResults(detections, {
-            width: regCanvas.width,
-            height: regCanvas.height
-          });
-
-          if (resized.length) {
-            const d = resized[0];
-            const box = d.detection.box;
-
-            regCtx.strokeStyle = '#00ff88';
-            regCtx.lineWidth = 3;
-            regCtx.strokeRect(box.x, box.y, box.width, box.height);
-            regCtx.fillStyle = '#00ff88';
-            regCtx.fillRect(box.x, box.y - 25, Math.max(box.width, 140), 25);
-            regCtx.fillStyle = '#000';
-            regCtx.font = 'bold 12px Arial';
-            regCtx.fillText('Face Detected ✓', box.x + 5, box.y - 8);
-
-            // Collect only if exactly one confident face is visible and capture is active
-            if (this.registrationMode && this.registrationData.startTime && d.detection.score >= 0.6 && detections.length === 1) {
-              // IMPORTANT: keep as Float32Array for proper distance calc
-              this.registrationData.descriptors.push(new Float32Array(d.descriptor));
-            }
-          } else {
-            regCtx.fillStyle = '#ff4444';
-            regCtx.font = 'bold 16px Arial';
-            regCtx.textAlign = 'center';
-            regCtx.fillText('Position your face in the frame', regCanvas.width / 2, regCanvas.height / 2);
-            regCtx.textAlign = 'left';
-          }
-        } catch (error) {
-          console.error('Registration detection error:', error);
-        }
-
-        if (this.registrationDetectionLoop) {
-          setTimeout(this.registrationDetectionLoop, 100);
-        }
+    await new Promise(resolve => {
+      regVideo.onloadedmetadata = () => {
+        // NOTE: keep a slightly larger working canvas for better detection
+        regCanvas.width = 320;
+        regCanvas.height = 240;
+        resolve();
       };
+    });
 
-      this.registrationDetectionLoop();
-    } catch (error) {
-      console.error('Registration camera error:', error);
-      alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
-    }
-  }
+    // Offscreen canvas to snapshot the current frame (improves stability)
+    const snap = document.createElement('canvas');
+    snap.width = 320;
+    snap.height = 240;
+    const snapCtx = snap.getContext('2d');
 
-  startRegistration() {
-    const userName = document.getElementById('newUserName').value.trim();
-    if (!userName) {
-      alert('Please enter a name');
-      return;
-    }
+    // draw a simple “face mask” guide
+    const drawGuide = () => {
+      regCtx.save();
+      regCtx.globalAlpha = 0.25;
+      regCtx.fillStyle = '#000';
+      regCtx.fillRect(0, 0, regCanvas.width, regCanvas.height);
+      regCtx.globalAlpha = 1;
 
-    this.registrationMode = true;
-    this.registrationData.descriptors = [];
-    this.registrationData.startTime = Date.now();
+      // cut out an ellipse in the middle
+      regCtx.globalCompositeOperation = 'destination-out';
+      regCtx.beginPath();
+      regCtx.ellipse(regCanvas.width/2, regCanvas.height/2, 90, 120, 0, 0, Math.PI*2);
+      regCtx.fill();
+      regCtx.globalCompositeOperation = 'source-over';
 
-    const progressContainer = document.getElementById('registrationProgress');
-    const progressFill = document.getElementById('progressFill');
-    const timeLeftSpan = document.getElementById('timeLeft');
+      regCtx.strokeStyle = '#00ff88';
+      regCtx.lineWidth = 2;
+      regCtx.beginPath();
+      regCtx.ellipse(regCanvas.width/2, regCanvas.height/2, 90, 120, 0, 0, Math.PI*2);
+      regCtx.stroke();
 
-    document.getElementById('startRegistration').style.display = 'none';
-    document.getElementById('cancelRegistration').textContent = 'Stop Registration';
-    progressContainer.style.display = 'block';
-    timeLeftSpan.textContent = Math.ceil(this.registrationData.duration / 1000);
+      regCtx.fillStyle = '#ccc';
+      regCtx.font = 'bold 12px system-ui, Arial';
+      regCtx.textAlign = 'center';
+      regCtx.fillText('Align your face inside the oval', regCanvas.width/2, 20);
+      regCtx.restore();
+    };
 
-    const tick = () => {
-      const elapsed = Date.now() - this.registrationData.startTime;
-      const progress = Math.min((elapsed / this.registrationData.duration) * 100, 100);
-      const timeLeft = Math.max(Math.ceil((this.registrationData.duration - elapsed) / 1000), 0);
+    const tfdOpts = new faceapi.TinyFaceDetectorOptions({
+      inputSize: 416,        // larger = more accurate
+      scoreThreshold: 0.4    // a bit relaxed for indoor lighting
+    });
 
-      progressFill.style.width = progress + '%';
-      timeLeftSpan.textContent = timeLeft;
+    this.registrationDetectionLoop = async () => {
+      try {
+        if (!this.modelsLoaded) {
+          setTimeout(this.registrationDetectionLoop, 200);
+          return;
+        }
+        if (document.getElementById('registrationModal').style.display !== 'block' || regVideo.paused || regVideo.ended) {
+          return;
+        }
 
-      if (elapsed >= this.registrationData.duration) {
-        this.completeRegistration(userName);
-      } else {
-        setTimeout(tick, 100);
+        // 1) Snapshot current frame to offscreen canvas
+        snapCtx.drawImage(regVideo, 0, 0, snap.width, snap.height);
+
+        // 2) Run detection on the snapshot
+        const det = await faceapi
+          .detectSingleFace(snap, tfdOpts)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        // 3) Clear and redraw guide
+        regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
+        drawGuide();
+
+        if (det) {
+          // scale box to overlay canvas
+          const scaleX = regCanvas.width / snap.width;
+          const scaleY = regCanvas.height / snap.height;
+          const box = new faceapi.Box(
+            det.detection.box.x * scaleX,
+            det.detection.box.y * scaleY,
+            det.detection.box.width * scaleX,
+            det.detection.box.height * scaleY
+          );
+
+          // draw box + label
+          regCtx.strokeStyle = '#00ff88';
+          regCtx.lineWidth = 3;
+          regCtx.strokeRect(box.x, box.y, box.width, box.height);
+          regCtx.fillStyle = '#00ff88';
+          regCtx.fillRect(box.x, Math.max(0, box.y - 22), Math.max(120, box.width), 20);
+          regCtx.fillStyle = '#000';
+          regCtx.font = 'bold 12px system-ui, Arial';
+          regCtx.fillText('Face Detected ✓', box.x + 6, Math.max(12, box.y - 8));
+
+          // 4) Collect descriptor while capturing window is active
+          if (this.registrationMode && this.registrationData.startTime) {
+            // keep as Float32Array for proper distance calculations later
+            this.registrationData.descriptors.push(new Float32Array(det.descriptor));
+          }
+        } else {
+          // hint text
+          regCtx.fillStyle = '#ff6666';
+          regCtx.font = 'bold 14px system-ui, Arial';
+          regCtx.textAlign = 'center';
+          regCtx.fillText('Center your face | Good light | Look at camera', regCanvas.width/2, regCanvas.height - 8);
+          regCtx.textAlign = 'left';
+        }
+      } catch (err) {
+        console.error('Registration detection error:', err);
+      }
+
+      if (this.registrationDetectionLoop) {
+        setTimeout(this.registrationDetectionLoop, 100);
       }
     };
-    tick();
+
+    drawGuide();
+    this.registrationDetectionLoop();
+  } catch (error) {
+    console.error('Registration camera error:', error);
+    alert('Failed to access camera for registration. Please ensure camera permissions are granted and use HTTPS/localhost.');
   }
+}
+
 
   async completeRegistration(userName) {
     try {
